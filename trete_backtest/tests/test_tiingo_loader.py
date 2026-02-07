@@ -1,6 +1,12 @@
+import os
+import sys
 import pytest
 import numpy as np
 import pandas as pd
+
+# Allow running this file directly with `python test_tiingo_loader.py`
+# (conftest.py handles this for pytest, but not for direct execution)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from config import DataConfig
 from data.tiingo_loader import fetch_ticker_from_tiingo, load_ticker, fetch_vix, load_vix
