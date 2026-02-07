@@ -15,10 +15,15 @@ def test_fetch_raises_on_empty_api_key():
 # ---------- Test 1.2 — Response schema (requires live API) ----------
 @pytest.mark.network
 def test_fetch_spy_returns_correct_schema(config_with_key):
-    """Skip if TIINGO_API_KEY not set."""
-    df = fetch_ticker_from_tiingo(
-        "SPY", "2024-01-02", "2024-01-31", config_with_key.tiingo_api_key
-    )
+    """Skip if TIINGO_API_KEY not set or network unavailable."""
+    try:
+        df = fetch_ticker_from_tiingo(
+            "SPY", "2024-01-02", "2024-01-31", config_with_key.tiingo_api_key
+        )
+    except (ConnectionError, Exception) as exc:
+        if "Proxy" in str(type(exc).__name__) or "Proxy" in str(exc) or "Connection" in str(type(exc).__name__):
+            pytest.skip(f"Network unavailable: {exc}")
+        raise
     assert isinstance(df.index, pd.DatetimeIndex)
     assert df.index.name == "date"
     assert list(df.columns) == ["adjOpen", "adjClose", "adjVolume"]
@@ -63,7 +68,12 @@ def test_cache_roundtrip(tmp_path, monkeypatch):
 @pytest.mark.network
 def test_vix_schema(config_with_key):
     """Skip if network unavailable."""
-    df = fetch_vix("2024-01-02", "2024-01-31")
+    try:
+        df = fetch_vix("2024-01-02", "2024-01-31")
+    except Exception as exc:
+        if "Proxy" in str(type(exc).__name__) or "Proxy" in str(exc) or "Connection" in str(type(exc).__name__):
+            pytest.skip(f"Network unavailable: {exc}")
+        raise
     assert isinstance(df.index, pd.DatetimeIndex)
     assert "vix_close" in df.columns
     assert df["vix_close"].dtype == np.float64
